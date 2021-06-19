@@ -30,15 +30,15 @@ carrotIMG = pygame.image.load('src/main/flowers.png')
 
 #background
 currbackground = 0
-# backgroundImage1 = pygame.image.load('Pygames_Learning/background1.jpg')
-# backgroundImage2 = pygame.image.load('Pygames_Learning/background2.jpg')
+backgroundImage1 = pygame.image.load('src/main/Starting_Screen.png')
+backgroundImage2 = pygame.image.load('src/main/Tutorial_Screen.png')
 # backgroundImage3 = pygame.image.load('Pygames_Learning/background3.jpg')
-# currbackgroundImage = backgroundImage1
+currbackgroundImage = backgroundImage1
 
 #Text
 text = "you are in the first area"
 font = pygame.font.Font('freesansbold.ttf', 32)
-holdingText = "you are holding nothing"
+holdingText = ""
 font = pygame.font.Font('freesansbold.ttf', 32)
 
 textX = 20
@@ -50,6 +50,12 @@ holdingTextY = 45
 #clock
 clock = pygame.time.Clock()
 
+def checkWithinBox(xMin, xMax, yMin, yMax, mX,mY):
+  withinY = mY < yMax + 5 and mY > yMin - 5
+  withinX = mX < xMax + 5 and mX > xMin - 5
+
+  return withinY and withinX
+
 def showText(desiredText, desiredHoldingText):
   text = font.render(desiredText, True, (255, 255, 255))
   screen.blit(text, (textX, textY))
@@ -59,12 +65,23 @@ def showText(desiredText, desiredHoldingText):
 def player(x, y):
   screen.blit(playerImg, (x, y))
   pygame.draw.circle(screen, (  0,   0, 255), (x + 32,y + 32), 10)
-  
+
+#backgrounds
 background1PlacedImagesPositions = []
+background2PlacedImagesPositions = []
+background3PlacedImagesPositions = []
+background4PlacedImagesPositions = []
+background5PlacedImagesPositions = []
 
 def renderAllPlaced():
   if currbackground == 0:
     for IMGandCoordinates in background1PlacedImagesPositions:
+      screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
+  elif currbackground == 1:
+    for IMGandCoordinates in background2PlacedImagesPositions:
+      screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
+  elif currbackground == 2:
+    for IMGandCoordinates in background3PlacedImagesPositions:
       screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
 
 def withinDistance(position1, position2, distance):
@@ -72,6 +89,14 @@ def withinDistance(position1, position2, distance):
   return totalDistance <= distance
 
 allPlants = []
+
+def addToCurrentThing(backgroundPlacedImagesPositions):
+  if currholding == 1:
+    backgroundPlacedImagesPositions.append(imageCoordinateCombo(carrotIMG, (mx - 4, my - 6)))
+  elif currholding == 2:
+    backgroundPlacedImagesPositions.append(imageCoordinateCombo(flowerIMG, (mx - 5, my - 6)))
+  elif currholding == 3:
+    backgroundPlacedImagesPositions.append(imageCoordinateCombo(treeIMG, (mx - 40, my - 40)))
 
 class Positionable():
   def __init__(self, Position):
@@ -267,7 +292,9 @@ class imageCoordinateCombo():
   def getCoordinate(self):
     return self.coordinate
 
+#booleans
 running = True
+QorEPRESSED = False
 currholding = 0
 
 while running:
@@ -275,11 +302,8 @@ while running:
   mx, my = pygame.mouse.get_pos()
 
   screen.fill((0,0,0))
-  # screen.blit(currbackgroundImage, (0,0))
+  screen.blit(currbackgroundImage, (0,0))
   showText(text, holdingText)
-
-  pygame.time.delay(2)
-  clock.tick(200)
 
   for event in pygame.event.get():
     if event.type == pygame.QUIT:
@@ -287,92 +311,127 @@ while running:
 
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_a:
-        playerDeltaX = -1
+        playerDeltaX = -2
       elif event.key == pygame.K_d:
-        playerDeltaX = 1
+        playerDeltaX = 2
       elif event.key == pygame.K_w:
-        playerDeltaY = -1
+        playerDeltaY = -2
       elif event.key == pygame.K_s:
-        playerDeltaY = 1
+        playerDeltaY = 2
       elif event.key == pygame.K_e:
+        QorEPRESSED = True
         if currholding == 5:
           currholding = 0
         else:
           currholding += 1
       elif event.key == pygame.K_q:
+        QorEPRESSED = True
         if currholding == 0:
           currholding = 5
         else:
           currholding -= 1
-      
-      if currholding == 0:
-        holdingText = "you are holding nothing"
-      elif currholding == 1:
-        holdingText = "you are holding a leafy plant"
-      elif currholding == 2:
-        holdingText = "you are holding a succulent plant"
-      elif currholding == 3:
-        holdingText = "you are holding a tree"
-      elif currholding == 4:
-        holdingText = "you are holding fertilizer"
-      elif currholding == 5:
-        holdingText = "you are holding a watering can"
+
+      if currbackground != 0 and QorEPRESSED:
+        if currholding == 0:
+          holdingText = "you are holding nothing"
+        elif currholding == 1:
+          holdingText = "you are holding a leafy plant"
+        elif currholding == 2:
+          holdingText = "you are holding a succulent plant"
+        elif currholding == 3:
+          holdingText = "you are holding a tree"
+        elif currholding == 4:
+          holdingText = "you are holding fertilizer"
+        elif currholding == 5:
+          holdingText = "you are holding a watering can"
 
     if event.type == pygame.KEYUP:
       playerDeltaX = 0
       playerDeltaY = 0
 
     if event.type == pygame.MOUSEBUTTONDOWN:
-      if(withinDistance(Position(playerX + 38, playerY + 50), Position(mx + 32, my + 32), 128)):
-        if currholding == 1:
-          background1PlacedImagesPositions.append(imageCoordinateCombo(carrotIMG, (mx - 4, my - 6)))
-        elif currholding == 2:
-          background1PlacedImagesPositions.append(imageCoordinateCombo(flowerIMG, (mx - 5, my - 6)))
-        elif currholding == 3:
-          background1PlacedImagesPositions.append(imageCoordinateCombo(treeIMG, (mx - 40, my - 40)))
+      if currbackground == 1 and currholding == 0:
+        if(checkWithinBox(48, 122, 137, 223, mx, my)):
+          text = "flowers are great at removing noxious odors"
+        elif(checkWithinBox(500, 575, 137, 223, mx, my)):
+          text = "trees do a lot to stabilize soil"
+        elif(checkWithinBox(10, 85, 353, 440, mx, my)):
+          text = "vegetables are an important food source"
+        elif(checkWithinBox(702, 778, 341, 427, mx, my)):
+          text = "remember to water and fertilize your plants"
 
+      if(withinDistance(Position(playerX + 38, playerY + 50), Position(mx + 32, my + 32), 128)):
+        if currbackground == 1:
+          addToCurrentThing(background2PlacedImagesPositions)
+        elif currbackground == 2:
+          addToCurrentThing(background3PlacedImagesPositions)
+        elif currbackground == 3:
+          addToCurrentThing(background4PlacedImagesPositions)
+        elif currbackground == 4:
+          addToCurrentThing(background5PlacedImagesPositions)
+        
   if playerX <= -32:
-    if currbackground == 0:
+    if currbackground == 0 or currbackground == 2:
       playerX = -32
     else:
-      playerX = WIDTH - 64
+      playerX = WIDTH - 40
 
       if currbackground == 1:
         text = "you are in the first area"
         currbackground = 0
-      #   currbackgroundImage = backgroundImage1
-      elif currbackground == 2:
-        text = "you are in the second area"
-        currbackground = 1
-      #   currbackgroundImage = backgroundImage2
+        currbackgroundImage = backgroundImage1
+      elif currbackground == 3:
+        text = "you are in the third area"
+        currbackground = 2
+      elif currbackground == 4:
+        text = "you are in the fourth area"
+        currbackground = 3
       
       print(currbackground)
 
-
   if playerX >= WIDTH - 32:
-    if currbackground == 2:
+    if currbackground == 1 or currbackground == 4:
       playerX = WIDTH - 32
     else:
-      playerX = 0
+      playerX = -28
 
       if currbackground == 0:
-        text = "you are in the second area"
+        text = "press the signs while holding nothing for tip"
+        holdingText = "press q and e to hold different items"
         currbackground = 1
+        currbackgroundImage = backgroundImage2
+      elif currbackground == 2:
+        text = "you are in the fourth area"
+        currbackground = 3
       #   currbackgroundImage = backgroundImage2
-      elif currbackground == 1:
-        text = "you are in the third area"
-        currbackground = 2
-      #   currbackgroundImage = backgroundImage3
+      elif currbackground == 3:
+        text = "you are in the fifth area"
+        currbackground = 4
       
       print(currbackground)
 
   #Boundary handling
   if playerY < -32:
-    playerY = -32
+    if currbackground == 2:
+      playerY = HEIGHT - 40
+      text = "you are in the second area"
+      currbackground = 1
+      currbackgroundImage = backgroundImage2
+    else:
+      playerY = -32
+      
+    print(currbackground)
 
-  elif playerY > HEIGHT - 32:
-    playerY = HEIGHT - 32
-
+  #Boundary handling
+  if playerY > HEIGHT - 32:
+    if currbackground == 1:
+      playerY = -28
+      text = "you are in the third area"
+      currbackground = 2
+    else:
+      playerY = HEIGHT - 32
+      
+    print(currbackground)
 
   #moving
   playerY += playerDeltaY
