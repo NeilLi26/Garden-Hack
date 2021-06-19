@@ -32,7 +32,9 @@ carrotIMG = pygame.image.load('src/main/flowers.png')
 currbackground = 0
 backgroundImage1 = pygame.image.load('src/main/Starting_Screen.png')
 backgroundImage2 = pygame.image.load('src/main/Tutorial_Screen.png')
-# backgroundImage3 = pygame.image.load('Pygames_Learning/background3.jpg')
+# backgroundImage3 = pygame.image.load('src/main/Starting_Screen.png')
+# backgroundImage4 = pygame.image.load('src/main/Starting_Screen.png')
+# backgroundImage5 = pygame.image.load('src/main/Starting_Screen.png')
 currbackgroundImage = backgroundImage1
 
 #Text
@@ -90,13 +92,51 @@ def withinDistance(position1, position2, distance):
 
 allPlants = []
 
-def addToCurrentThing(backgroundPlacedImagesPositions):
+def addToCurrentThing(currbackground):
+  backgroundPlacedImagesPositions = background1PlacedImagesPositions
+
+  if currbackground == 1:
+    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+  elif currbackground == 2:
+    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+  elif currbackground == 3:
+    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+  elif currbackground == 4:
+    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+
   if currholding == 1:
     backgroundPlacedImagesPositions.append(imageCoordinateCombo(carrotIMG, (mx - 4, my - 6)))
+    allPlants.append(Plant(Position(mx - 4, my - 6), currholding - 1, currbackground))
   elif currholding == 2:
     backgroundPlacedImagesPositions.append(imageCoordinateCombo(flowerIMG, (mx - 5, my - 6)))
+    allPlants.append(Plant(Position(mx - 5, my - 6), currholding - 1, currbackground))
   elif currholding == 3:
     backgroundPlacedImagesPositions.append(imageCoordinateCombo(treeIMG, (mx - 40, my - 40)))
+    allPlants.append(Plant(Position(mx - 40, my - 40), currholding - 1, currbackground))
+
+def water():
+  plantsInSameBackground = []
+
+  for plant in allPlants:
+    if plant.getBackground() == currbackground:
+      plantsInSameBackground.append(plant)
+
+  for plant in plantsInSameBackground:
+    if withinDistance(plant.getPos(), Position(playerX, playerY), 128):
+      plant.makeWatered()
+      
+
+def fertilize():
+  plantsInSameBackground = []
+
+  for plant in allPlants:
+    if plant.getBackground() == currbackground:
+      plantsInSameBackground.append(plant)
+
+  for plant in plantsInSameBackground:
+    if withinDistance(plant.getPos(), Position(playerX, playerY), 128):
+      plant.makeFertilized()
+      
 
 class Positionable():
   def __init__(self, Position):
@@ -183,103 +223,41 @@ class Position():
   def setY(self, y):
     self.y = y
 
-class Soil(Positionable):
-  def __init__(self, Position):
+class Plant(Positionable):
+  def __init__(self, Position, type, background):
       super().__init__(Position)
-      self.onSoil = 0
-      #0 for nothing, 1 for non-harmful, 2 for harm-ful, 3 for good
-      self.waterLevel = 5
-      self.soilFertility = 5
+      self.happiness = False
+      self.watered = False
+      self.fertilized = False
+      self.type = type
+      self.background = background
+      # 0 for leafy, 1 for succlent, 2 for trees
+
+  def getHappiness(self):
+    return self.happiness
   
-  def getWaterLevel(self):
-    return self.waterLevel
+  def makeHappy(self):
+    self.happiness = True
 
-  def getSoilFertility(self):
-    return self.soilFertility
+  def getType(self):
+    return self.type
 
-  def getOnSOil(self):
-    return self.onSoil
-
-  def setOnSoil(self, onSoil):
-    self.onSoil = onSoil
-
-  def water(self):
-    self.waterLevel += 4
-
-  def fertilize(self):
-    self.soilFertility += 4
-
-  def nourishPlant(self):
-    self.soilFertility -= 1
-    self.waterLevel -= 1
-
-class onSOil():
-  def __init__(self, soil, onSoil):
-      self.soil = soil
-      self.soil.setOnSoil(onSoil)
-
-  def getSoil(self):
-    return self.soil
-
-class Plant(onSOil):
-  def __init__(self, soil):
-      super().__init__(soil, 1)
-      self.growthState = 0 
-      # three grow states, 0-4 is seedling, 5-9 is sapling, 10+ is fully grown
-      self.water = 5
-      self.soilQuality = 5
-
-  def getGS(self):
-    return self.growthState
+  def getwWatered(self):
+    return self.background
   
-  def grow(self):
-    currentSoil = self.soil
-
-    if currentSoil.getWaterLevel() > 6 and currentSoil.getWaterLevel() < 10 and currentSoil.getSoilFertility() > 6 and currentSoil.getSoilFertility() < 10:
-      self.growthState += 2
-    elif currentSoil.getWaterLevel() > 6 and currentSoil.getWaterLevel() < 10 and currentSoil.getSoilFertility() > 6 and currentSoil.getSoilFertility() < 10:
-      self.growthState += 1
-
-    if currentSoil.getWaterLevel() > 0 and currentSoil.getSoilFertility() > 0:
-      currentSoil.nourishPlant()
-
-#the following three are not completedf
-class Leafy(Plant):
-  def __init__(self, soil, soilFertility):
-      super().__init__(soil, soilFertility)
-
-class SuccuLent(Plant):
-  def __init__(self, soil):
-      super().__init__(soil)
-
-class Tree(Plant):
-  def __init__(self, soil):
-      super().__init__(soil)
-
-#not completed
-class Villager(onSOil):
-  def __init__(self, soil):
-      super().__init__(soil, 0)
-      self.mood = 0
-      #0-4 is sad, 5-9 is alright, 10+ is happy
+  def getFertilized(self):
+    return self.background
   
-  def getMood(self):
-   return self.mood
+  def getBackground(self):
+    return self.background
+  
+  def makeWatered(self):
+    self.watered = True
+    print("you watered a plant")
 
-  def nearToxin(self):
-    soilState = self.soil.getOnSoil
-
-    if soilState == 2:
-      self.mood == 0
-    elif soilState == 3:
-      self.mood += 2
-
-class ToxinGas(onSOil):
-  def __init__(self, soil):
-      super().__init__(soil, 2)
-
-  def setAffectedToToxic(self):
-    self.soil.setOnSoil(2)
+  def makeFertilized(self):
+    self.fertilized = True
+    print("you fertilized a plant")
 
 class imageCoordinateCombo():
   def __init__(self, image, coordinate):
@@ -361,14 +339,15 @@ while running:
           text = "remember to water and fertilize your plants"
 
       if(withinDistance(Position(playerX + 38, playerY + 50), Position(mx + 32, my + 32), 128)):
-        if currbackground == 1:
-          addToCurrentThing(background2PlacedImagesPositions)
-        elif currbackground == 2:
-          addToCurrentThing(background3PlacedImagesPositions)
-        elif currbackground == 3:
-          addToCurrentThing(background4PlacedImagesPositions)
-        elif currbackground == 4:
-          addToCurrentThing(background5PlacedImagesPositions)
+        if(currholding >= 4):
+          if currholding == 4:
+            fertilize()
+          elif currholding == 5:
+            water()
+
+        else:
+          addToCurrentThing(currbackground)
+          
         
   if playerX <= -32:
     if currbackground == 0 or currbackground == 2:
@@ -383,9 +362,11 @@ while running:
       elif currbackground == 3:
         text = "you are in the third area"
         currbackground = 2
+        # currbackgroundImage = backgroundImage3
       elif currbackground == 4:
         text = "you are in the fourth area"
         currbackground = 3
+        # currbackgroundImage = backgroundImage4
       
       print(currbackground)
 
@@ -403,10 +384,11 @@ while running:
       elif currbackground == 2:
         text = "you are in the fourth area"
         currbackground = 3
-      #   currbackgroundImage = backgroundImage2
+      #   currbackgroundImage = backgroundImage4
       elif currbackground == 3:
         text = "you are in the fifth area"
         currbackground = 4
+        # currbackgroundImage = backgroundImage5
       
       print(currbackground)
 
@@ -428,6 +410,7 @@ while running:
       playerY = -28
       text = "you are in the third area"
       currbackground = 2
+      # currbackgroundImage = backgroundImage1
     else:
       playerY = HEIGHT - 32
       
