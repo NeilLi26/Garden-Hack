@@ -23,6 +23,11 @@ playerY = 300
 playerDeltaX = 0
 playerDeltaY = 0
 
+#plants
+treeIMG = pygame.image.load('src/main/big_tree.png')
+flowerIMG = pygame.image.load('src/main/carrot.png')
+carrotIMG = pygame.image.load('src/main/flowers.png')
+
 #background
 currbackground = 0
 # backgroundImage1 = pygame.image.load('Pygames_Learning/background1.jpg')
@@ -33,30 +38,40 @@ currbackground = 0
 #Text
 text = "you are in the first area"
 font = pygame.font.Font('freesansbold.ttf', 32)
+holdingText = "you are holding nothing"
+font = pygame.font.Font('freesansbold.ttf', 32)
 
 textX = 20
 textY = 10
 
+holdingTextX = 20
+holdingTextY = 45
+
 #clock
 clock = pygame.time.Clock()
 
-def showText(desiredText):
+def showText(desiredText, desiredHoldingText):
   text = font.render(desiredText, True, (255, 255, 255))
   screen.blit(text, (textX, textY))
+  text = font.render(desiredHoldingText, True, (255, 255, 255))
+  screen.blit(text, (holdingTextX, holdingTextY))
 
 def player(x, y):
   screen.blit(playerImg, (x, y))
+  pygame.draw.circle(screen, (  0,   0, 255), (x + 32,y + 32), 10)
   
 background1PlacedImagesPositions = []
 
 def renderAllPlaced():
   if currbackground == 0:
-    for coordinates in background1PlacedImagesPositions:
-      screen.blit(playerImg, coordinates)
+    for IMGandCoordinates in background1PlacedImagesPositions:
+      screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
 
 def withinDistance(position1, position2, distance):
   totalDistance = math.sqrt(math.pow(position1.getX() - position2.getX() , 2) + math.pow(position1.getY() - position2.getY() , 2))
   return totalDistance <= distance
+
+allPlants = []
 
 class Positionable():
   def __init__(self, Position):
@@ -203,7 +218,7 @@ class Plant(onSOil):
     if currentSoil.getWaterLevel() > 0 and currentSoil.getSoilFertility() > 0:
       currentSoil.nourishPlant()
 
-#the following three are not completed
+#the following three are not completedf
 class Leafy(Plant):
   def __init__(self, soil, soilFertility):
       super().__init__(soil, soilFertility)
@@ -215,11 +230,6 @@ class SuccuLent(Plant):
 class Tree(Plant):
   def __init__(self, soil):
       super().__init__(soil)
-
-class Map():
-  def __init__(self, horizontalSize, verticalSize):
-      self.Horizontal = []
-      self.Vertical = []
 
 #not completed
 class Villager(onSOil):
@@ -246,7 +256,19 @@ class ToxinGas(onSOil):
   def setAffectedToToxic(self):
     self.soil.setOnSoil(2)
 
+class imageCoordinateCombo():
+  def __init__(self, image, coordinate):
+      self.image = image
+      self.coordinate = coordinate
+  
+  def getImage(self):
+    return self.image
+
+  def getCoordinate(self):
+    return self.coordinate
+
 running = True
+currholding = 0
 
 while running:
 
@@ -254,7 +276,7 @@ while running:
 
   screen.fill((0,0,0))
   # screen.blit(currbackgroundImage, (0,0))
-  showText(text)
+  showText(text, holdingText)
 
   pygame.time.delay(2)
   clock.tick(200)
@@ -272,18 +294,42 @@ while running:
         playerDeltaY = -1
       elif event.key == pygame.K_s:
         playerDeltaY = 1
+      elif event.key == pygame.K_e:
+        if currholding == 5:
+          currholding = 0
+        else:
+          currholding += 1
+      elif event.key == pygame.K_q:
+        if currholding == 0:
+          currholding = 5
+        else:
+          currholding -= 1
+      
+      if currholding == 0:
+        holdingText = "you are holding nothing"
+      elif currholding == 1:
+        holdingText = "you are holding a leafy plant"
+      elif currholding == 2:
+        holdingText = "you are holding a succulent plant"
+      elif currholding == 3:
+        holdingText = "you are holding a tree"
+      elif currholding == 4:
+        holdingText = "you are holding fertilizer"
+      elif currholding == 5:
+        holdingText = "you are holding a watering can"
 
     if event.type == pygame.KEYUP:
       playerDeltaX = 0
       playerDeltaY = 0
 
     if event.type == pygame.MOUSEBUTTONDOWN:
-      background1PlacedImagesPositions.append((mx, my))
-
-      if playerX < mx:
-        text = "your mouse in further right"
-      elif playerX > mx:
-        text = "your mouse is further left"
+      if(withinDistance(Position(playerX + 38, playerY + 50), Position(mx + 32, my + 32), 128)):
+        if currholding == 1:
+          background1PlacedImagesPositions.append(imageCoordinateCombo(carrotIMG, (mx - 4, my - 6)))
+        elif currholding == 2:
+          background1PlacedImagesPositions.append(imageCoordinateCombo(flowerIMG, (mx - 5, my - 6)))
+        elif currholding == 3:
+          background1PlacedImagesPositions.append(imageCoordinateCombo(treeIMG, (mx - 40, my - 40)))
 
   if playerX <= -32:
     if currbackground == 0:
@@ -327,8 +373,6 @@ while running:
   elif playerY > HEIGHT - 32:
     playerY = HEIGHT - 32
 
-  if playerX >= WIDTH/2 and currbackground == 1:
-    text = "halfway there!"
 
   #moving
   playerY += playerDeltaY
