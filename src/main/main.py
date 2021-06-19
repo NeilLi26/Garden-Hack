@@ -1,3 +1,63 @@
+import pygame
+import math
+
+widthTiles = 15
+heightTiles = 8
+
+#import shit
+pygame.init()
+from pygame.locals import *
+
+#screen
+WIDTH = 800
+HEIGHT = 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Garden-Hack")
+icon = pygame.image.load('src/main/plant.png')
+pygame.display.set_icon(icon)
+
+#player
+playerImg = pygame.image.load('src/main/boi.png')
+playerX = 400
+playerY = 300
+playerDeltaX = 0
+playerDeltaY = 0
+
+#background
+currbackground = 0
+# backgroundImage1 = pygame.image.load('Pygames_Learning/background1.jpg')
+# backgroundImage2 = pygame.image.load('Pygames_Learning/background2.jpg')
+# backgroundImage3 = pygame.image.load('Pygames_Learning/background3.jpg')
+# currbackgroundImage = backgroundImage1
+
+#Text
+text = "you are in the first area"
+font = pygame.font.Font('freesansbold.ttf', 32)
+
+textX = 20
+textY = 10
+
+#clock
+clock = pygame.time.Clock()
+
+def showText(desiredText):
+  text = font.render(desiredText, True, (255, 255, 255))
+  screen.blit(text, (textX, textY))
+
+def player(x, y):
+  screen.blit(playerImg, (x, y))
+  
+background1PlacedImagesPositions = []
+
+def renderAllPlaced():
+  if currbackground == 0:
+    for coordinates in background1PlacedImagesPositions:
+      screen.blit(playerImg, coordinates)
+
+def withinDistance(position1, position2, distance):
+  totalDistance = math.sqrt(math.pow(position1.getX() - position2.getX() , 2) + math.pow(position1.getY() - position2.getY() , 2))
+  return totalDistance <= distance
+
 class Positionable():
   def __init__(self, Position):
       self.Position = Position
@@ -18,6 +78,22 @@ class Player(Positionable):
       self.currentlyHolding == 0
     else:
       self.currentlyHolding += 1
+
+  def prevHolding(self):
+    if self.currentlyHolding == 0:
+      self.currentlyHolding == 5
+    else:
+      self.currentlyHolding -= 1
+
+  # def useHolding(self, mousePos):
+  #   if self.currentlyHolding != 0:
+  #     if self.currentlyHolding == 4:
+  #       fertilize(mousePos)
+  #     elif self.currentlyHolding == 5:
+  #       water(mousePos)
+  #     else:
+  #       plant(self.currentlyHolding, mousePos)
+
 
   def goNorth(self):
     self.Position.setY(self.Position.getY() - 1)
@@ -110,7 +186,9 @@ class Plant(onSOil):
       super().__init__(soil, 1)
       self.growthState = 0 
       # three grow states, 0-4 is seedling, 5-9 is sapling, 10+ is fully grown
-  
+      self.water = 5
+      self.soilQuality = 5
+
   def getGS(self):
     return self.growthState
   
@@ -168,19 +246,94 @@ class ToxinGas(onSOil):
   def setAffectedToToxic(self):
     self.soil.setOnSoil(2)
 
-#just some testing stuff, could ditch
-def main():
-  pos = Position(2, 3)
-  print(pos.getX())
-  print(pos.getY())
+running = True
 
-  player = Player(pos)
-  player.goWest()
+while running:
 
-  print(player.getPos().x)
-  print(player.getPos().y)
-  print(player.getDirection())
+  mx, my = pygame.mouse.get_pos()
 
-  print("hello world")
+  screen.fill((0,0,0))
+  # screen.blit(currbackgroundImage, (0,0))
+  showText(text)
 
-main()
+  pygame.time.delay(2)
+  clock.tick(200)
+
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      running = False
+
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_a:
+        playerDeltaX = -1
+      elif event.key == pygame.K_d:
+        playerDeltaX = 1
+      elif event.key == pygame.K_w:
+        playerDeltaY = -1
+      elif event.key == pygame.K_s:
+        playerDeltaY = 1
+
+    if event.type == pygame.KEYUP:
+      playerDeltaX = 0
+      playerDeltaY = 0
+
+    if event.type == pygame.MOUSEBUTTONDOWN:
+      background1PlacedImagesPositions.append((mx, my))
+
+      if playerX < mx:
+        text = "your mouse in further right"
+      elif playerX > mx:
+        text = "your mouse is further left"
+
+  if playerX <= -32:
+    if currbackground == 0:
+      playerX = -32
+    else:
+      playerX = WIDTH - 64
+
+      if currbackground == 1:
+        text = "you are in the first area"
+        currbackground = 0
+      #   currbackgroundImage = backgroundImage1
+      elif currbackground == 2:
+        text = "you are in the second area"
+        currbackground = 1
+      #   currbackgroundImage = backgroundImage2
+      
+      print(currbackground)
+
+
+  if playerX >= WIDTH - 32:
+    if currbackground == 2:
+      playerX = WIDTH - 32
+    else:
+      playerX = 0
+
+      if currbackground == 0:
+        text = "you are in the second area"
+        currbackground = 1
+      #   currbackgroundImage = backgroundImage2
+      elif currbackground == 1:
+        text = "you are in the third area"
+        currbackground = 2
+      #   currbackgroundImage = backgroundImage3
+      
+      print(currbackground)
+
+  #Boundary handling
+  if playerY < -32:
+    playerY = -32
+
+  elif playerY > HEIGHT - 32:
+    playerY = HEIGHT - 32
+
+  if playerX >= WIDTH/2 and currbackground == 1:
+    text = "halfway there!"
+
+  #moving
+  playerY += playerDeltaY
+  playerX += playerDeltaX
+
+  renderAllPlaced()
+  player(playerX, playerY)
+  pygame.display.update()
