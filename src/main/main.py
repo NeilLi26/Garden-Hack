@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 
 widthTiles = 15
 heightTiles = 8
@@ -22,6 +23,12 @@ playerX = 400
 playerY = 300
 playerDeltaX = 0
 playerDeltaY = 0
+
+#villager initializations
+vsadIMG = "src/main/sadgirl.jpg"
+vmediumIMG = "src/main/mediumgirl.jpg"
+vhappyIMG = "src/main/happygirl.jpg"
+villagerIMG = vsadIMG
 
 #plants
 treeIMG = pygame.image.load('src/main/big_tree.png')
@@ -269,7 +276,66 @@ class imageCoordinateCombo():
 
   def getCoordinate(self):
     return self.coordinate
+all_villagers = pygame.sprite.Group()
 
+class Villager(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Villager,self).__init__()
+        self.surf = pygame.image.load(villagerIMG)
+        self.mood = 0
+
+        #changing the size of image
+        self.surf = pygame.transform.scale(self.surf, (80,120))
+        self.rect = self.surf.get_rect(
+        center=(
+            random.randint(0, WIDTH),
+            random.randint(0, HEIGHT),
+            )
+        )
+    def update(self):
+        self.mood = 0
+        
+        #Villager happiness
+        for IMGandCoordinates in background1PlacedImagesPositions:
+            if abs(self.rect.centerx - IMGandCoordinates.coordinate[0]) < 80 and abs(self.rect.centery - IMGandCoordinates.coordinate[1]) < 80:
+                self.mood +=1
+        if self.mood > 7:
+  
+            villagerIMG = vhappyIMG
+            self.surf = pygame.image.load(villagerIMG)
+            #Resize
+            self.surf = pygame.transform.scale(self.surf, (80,120))
+        elif self.mood > 4:
+
+            villagerIMG = vmediumIMG
+            self.surf = pygame.image.load(villagerIMG)
+            #Resize
+            self.surf = pygame.transform.scale(self.surf, (80,120))
+        elif self.mood < 4:
+            villagerIMG = vsadIMG
+            self.surf = pygame.image.load(villagerIMG)
+            #Resize
+            self.surf = pygame.transform.scale(self.surf, (80,120))
+   
+        #Villager movement
+        #self.rect.move_ip(random.randint(-3,3),random.randint(-3,3))
+
+        #Villager movement restriction
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
+        if self.rect.top <= 0:
+            self.rect.top = 0
+        if self.rect.bottom >= HEIGHT:
+            self.rect.bottom = HEIGHT
+            
+
+#Spawn villagers
+for villager in range(1,6):
+    villager = Villager()
+    all_villagers.add(villager)
+    
 #booleans
 running = True
 QorEPRESSED = False
@@ -415,7 +481,13 @@ while running:
       playerY = HEIGHT - 32
       
     print(currbackground)
-
+    
+  #rendering villagers
+  if currbackground == 0:
+    all_villagers.update()
+    for villager in all_villagers:
+        screen.blit(villager.surf, villager.rect)
+  
   #moving
   playerY += playerDeltaY
   playerX += playerDeltaX
