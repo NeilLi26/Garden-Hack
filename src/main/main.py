@@ -28,6 +28,9 @@ treeIMG = pygame.image.load('src/main/big_tree.png')
 flowerIMG = pygame.image.load('src/main/carrot.png')
 carrotIMG = pygame.image.load('src/main/flowers.png')
 
+#gas
+gasIMG = pygame.image.load('src/main/cloud.png')
+
 #background
 currbackground = 0
 backgroundImage1 = pygame.image.load('src/main/Starting_Screen.png')
@@ -90,6 +93,19 @@ def renderAllPlaced():
   elif currbackground == 2:
     for IMGandCoordinates in background3PlacedImagesPositions:
       screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
+  elif currbackground == 3:
+    for IMGandCoordinates in background4PlacedImagesPositions:
+      screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
+  elif currbackground == 4:
+    for IMGandCoordinates in background5PlacedImagesPositions:
+      screen.blit(IMGandCoordinates.getImage(), IMGandCoordinates.getCoordinate())
+
+def renderClouds(currbackground):
+  for cloud in gasClouds:
+    if cloud.getBackground() == currbackground:
+      pos = cloud.getPos()
+      screen.blit(gasIMG, (pos.getX(), pos.getY()))
+
 
 def withinDistance(position1, position2, distance):
   totalDistance = math.sqrt(math.pow(position1.getX() - position2.getX() , 2) + math.pow(position1.getY() - position2.getY() , 2))
@@ -101,11 +117,11 @@ def addToCurrentThing(currbackground):
   if currbackground == 1:
     backgroundPlacedImagesPositions = background2PlacedImagesPositions
   elif currbackground == 2:
-    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+    backgroundPlacedImagesPositions = background3PlacedImagesPositions
   elif currbackground == 3:
-    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+    backgroundPlacedImagesPositions = background4PlacedImagesPositions
   elif currbackground == 4:
-    backgroundPlacedImagesPositions = background2PlacedImagesPositions
+    backgroundPlacedImagesPositions = background4PlacedImagesPositions
 
   if currholding == 1:
     backgroundPlacedImagesPositions.append(imageCoordinateCombo(carrotIMG, (mx - 4, my - 6)))
@@ -152,21 +168,27 @@ def checkForNearbyTrees(linePos):
 
   return False
 
+def checkForHappyPlants():
+  for plant in allPlants:
+    if plant.getWatered() and plant.getFertilized():
+      plant.makeHappy()
+      print("a plant was made happy")
+
 def clearGasClouds(gasClouds):
   flowersInSameBackground = []
 
   for plant in allPlants:
-    if plant.getBackground() == currbackground and plant.getType() == 1:
+    if plant.getBackground() == currbackground and plant.getType() == 0:
       flowersInSameBackground.append(plant)
 
   filteredGasClouds = []
   
   for flower in flowersInSameBackground:
     for cloud in gasClouds:
-      if not (withinDistance(flower.getPos(), cloud.getPos(), 128) and flower.getHappiness()):
-        filteredGasClouds.append(cloud)
+      if withinDistance(flower.getPos(), cloud.getPos(), 128) and flower.getHappiness():
+        gasClouds.remove(cloud)
   
-  gasClouds = filteredGasClouds
+  # gasClouds = filteredGasClouds
 
 class Positionable():
   def __init__(self, Position):
@@ -174,67 +196,6 @@ class Positionable():
 
   def getPos(self):
       return self.Position
-
-#not completed
-class Player(Positionable):
-  def __init__(self, Position):
-      super().__init__(Position)
-      self.Direction = 2
-      self.currentlyHolding = 0
-      #0 for nothing, 1 for leafy, 2 for succulent, 3 for tree, 4 for fertilizer, 5 for water
-
-  def nextHolding(self):
-    if self.currentlyHolding == 5:
-      self.currentlyHolding == 0
-    else:
-      self.currentlyHolding += 1
-
-  def prevHolding(self):
-    if self.currentlyHolding == 0:
-      self.currentlyHolding == 5
-    else:
-      self.currentlyHolding -= 1
-
-  # def useHolding(self, mousePos):
-  #   if self.currentlyHolding != 0:
-  #     if self.currentlyHolding == 4:
-  #       fertilize(mousePos)
-  #     elif self.currentlyHolding == 5:
-  #       water(mousePos)
-  #     else:
-  #       plant(self.currentlyHolding, mousePos)
-
-
-  def goNorth(self):
-    self.Position.setY(self.Position.getY() - 1)
-    self.faceNorth()
-
-  def faceNorth(self):
-    self.Direction = 0
-
-  def goEast(self):
-    self.Position.setX(self.Position.getX() + 1)
-    self.faceNorth()
-
-  def faceEast(self):
-    self.Direction = 1
-
-  def goSouth(self):
-    self.Position.setY(self.Position.getY() + 1)
-    self.faceNorth()
-
-  def faceSouth(self):
-    self.Direction = 2
-
-  def goWest(self):
-    self.Position.setX(self.Position.getX() + 1)
-    self.faceNorth()
-
-  def faceWest(self):
-    self.Direction = 3
-
-  def getDirection(self):
-    return self.Direction
 
 class Position():
   def __init__(self, x, y) -> None:
@@ -272,11 +233,11 @@ class Plant(Positionable):
   def getType(self):
     return self.type
 
-  def getwWatered(self):
-    return self.background
+  def getWatered(self):
+    return self.watered
   
   def getFertilized(self):
-    return self.background
+    return self.fertilized
   
   def getBackground(self):
     return self.background
@@ -314,6 +275,9 @@ running = True
 QorEPRESSED = False
 thirdBackgroundRiverBlocking = True
 currholding = 0
+
+gasClouds.append(Gas(Position(300, 400), 1))
+gasClouds.append(Gas(Position(350, 400), 1))
 
 while running:
 
@@ -353,9 +317,9 @@ while running:
         if currholding == 0:
           holdingText = "you are holding nothing"
         elif currholding == 1:
-          holdingText = "you are holding a leafy plant"
+          holdingText = "you are holding a flowery plant"
         elif currholding == 2:
-          holdingText = "you are holding a succulent plant"
+          holdingText = "you are holding a delicious plant"
         elif currholding == 3:
           holdingText = "you are holding a tree"
         elif currholding == 4:
@@ -387,6 +351,9 @@ while running:
 
         else:
           addToCurrentThing(currbackground)
+
+      checkForHappyPlants()
+      clearGasClouds(gasClouds)
           
   if playerX <= -32:
     if currbackground == 0 or currbackground == 2:
@@ -466,11 +433,11 @@ while running:
   #moving
   playerY += playerDeltaY
   playerX += playerDeltaX
-
-  gasClouds.append(Gas(Position(300, 400), 1))
-  pygame.draw.circle(screen, (  0,   0, 255), (300,400), 10)
+  
+  clock.tick(120)
 
   renderAllPlaced()
+  renderClouds(currbackground)
   player(playerX, playerY)
-  clearGasClouds(gasClouds)
+  
   pygame.display.update()
