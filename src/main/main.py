@@ -75,6 +75,11 @@ background3PlacedImagesPositions = []
 background4PlacedImagesPositions = []
 background5PlacedImagesPositions = []
 
+#some collections of things
+allPlants = []
+
+gasClouds = []
+
 def renderAllPlaced():
   if currbackground == 0:
     for IMGandCoordinates in background1PlacedImagesPositions:
@@ -89,8 +94,6 @@ def renderAllPlaced():
 def withinDistance(position1, position2, distance):
   totalDistance = math.sqrt(math.pow(position1.getX() - position2.getX() , 2) + math.pow(position1.getY() - position2.getY() , 2))
   return totalDistance <= distance
-
-allPlants = []
 
 def addToCurrentThing(currbackground):
   backgroundPlacedImagesPositions = background1PlacedImagesPositions
@@ -124,7 +127,6 @@ def water():
   for plant in plantsInSameBackground:
     if withinDistance(plant.getPos(), Position(playerX, playerY), 128):
       plant.makeWatered()
-      
 
 def fertilize():
   plantsInSameBackground = []
@@ -137,6 +139,34 @@ def fertilize():
     if withinDistance(plant.getPos(), Position(playerX, playerY), 128):
       plant.makeFertilized()
       
+def checkForNearbyTrees(linePos):
+  treesInSameBackground = []
+
+  for plant in allPlants:
+    if plant.getBackground() == currbackground and plant.getType() == 2:
+      treesInSameBackground.append(plant)
+
+  for tree in treesInSameBackground:
+    if withinDistance(tree.getPos(), Position(tree.getPos().getX(), linePos), 128) and tree.getHappiness():
+      return True
+
+  return False
+
+def clearGasClouds(gasClouds):
+  flowersInSameBackground = []
+
+  for plant in allPlants:
+    if plant.getBackground() == currbackground and plant.getType() == 1:
+      flowersInSameBackground.append(plant)
+
+  filteredGasClouds = []
+  
+  for flower in flowersInSameBackground:
+    for cloud in gasClouds:
+      if not (withinDistance(flower.getPos(), cloud.getPos(), 128) and flower.getHappiness()):
+        filteredGasClouds.append(cloud)
+  
+  gasClouds = filteredGasClouds
 
 class Positionable():
   def __init__(self, Position):
@@ -259,6 +289,15 @@ class Plant(Positionable):
     self.fertilized = True
     print("you fertilized a plant")
 
+#gas with size 64 x 64
+class Gas(Positionable):
+  def __init__(self, Position, background):
+      super().__init__(Position)
+      self.background = background
+
+  def getBackground(self):
+    return self.background
+
 class imageCoordinateCombo():
   def __init__(self, image, coordinate):
       self.image = image
@@ -273,6 +312,7 @@ class imageCoordinateCombo():
 #booleans
 running = True
 QorEPRESSED = False
+thirdBackgroundRiverBlocking = True
 currholding = 0
 
 while running:
@@ -348,7 +388,6 @@ while running:
         else:
           addToCurrentThing(currbackground)
           
-        
   if playerX <= -32:
     if currbackground == 0 or currbackground == 2:
       playerX = -32
@@ -416,10 +455,22 @@ while running:
       
     print(currbackground)
 
+  #third thing event
+  if currbackground == 2:
+    if thirdBackgroundRiverBlocking:
+      if playerY >= 300:
+        playerY = 300
+
+      thirdBackgroundRiverBlocking = checkForNearbyTrees(300)
+
   #moving
   playerY += playerDeltaY
   playerX += playerDeltaX
 
+  gasClouds.append(Gas(Position(300, 400), 1))
+  pygame.draw.circle(screen, (  0,   0, 255), (300,400), 10)
+
   renderAllPlaced()
   player(playerX, playerY)
+  clearGasClouds(gasClouds)
   pygame.display.update()
