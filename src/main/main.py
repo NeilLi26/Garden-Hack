@@ -25,15 +25,16 @@ playerDeltaX = 0
 playerDeltaY = 0
 
 #villager initializations
-vsadIMG = "src/main/sadgirl.jpg"
-vmediumIMG = "src/main/mediumgirl.jpg"
-vhappyIMG = "src/main/happygirl.jpg"
+vsadIMG = "src/main/sad.png"
+vmediumIMG = "src/main/meh.png"
+vhappyIMG = "src/main/happy.png"
 villagerIMG = vsadIMG
 
 #plants
 treeIMG = pygame.image.load('src/main/big_tree.png')
 flowerIMG = pygame.image.load('src/main/carrot.png')
 carrotIMG = pygame.image.load('src/main/flowers.png')
+dirtRowIMG = pygame.image.load('src/main/dirt_row.png')
 
 #gas
 gasIMG = pygame.image.load('src/main/cloud.png')
@@ -43,8 +44,8 @@ currbackground = 0
 backgroundImage1 = pygame.image.load('src/main/Starting_Screen.png')
 backgroundImage2 = pygame.image.load('src/main/Tutorial_Screen.png')
 backgroundImage3 = pygame.image.load('src/main/Level_1_Screen.png')
-# backgroundImage4 = pygame.image.load('src/main/Starting_Screen.png')
-# backgroundImage5 = pygame.image.load('src/main/Starting_Screen.png')
+backgroundImage4 = pygame.image.load('src/main/Level_2_Screen.png')
+backgroundImage5 = pygame.image.load('src/main/End_SCreen.png')
 currbackgroundImage = backgroundImage1
 
 #Text
@@ -76,7 +77,6 @@ def showText(desiredText, desiredHoldingText):
 
 def player(x, y):
   screen.blit(playerImg, (x, y))
-  pygame.draw.circle(screen, (  0,   0, 255), (x + 32,y + 32), 10)
 
 #backgrounds
 background1PlacedImagesPositions = []
@@ -170,10 +170,11 @@ def checkForNearbyTrees(linePos):
       treesInSameBackground.append(plant)
 
   for tree in treesInSameBackground:
-    if withinDistance(tree.getPos(), Position(tree.getPos().getX(), linePos), 128) and tree.getHappiness():
-      return True
+    if withinDistance(tree.getPos(), Position(linePos, tree.getPos().getY()), 128) and tree.getHappiness():
+      background4PlacedImagesPositions.append(imageCoordinateCombo(dirtRowIMG, (0,0)))
+      return False
 
-  return False
+  return True
 
 def checkForHappyPlants():
   for plant in allPlants:
@@ -289,7 +290,7 @@ class Villager(pygame.sprite.Sprite):
         self.mood = 0
 
         #changing the size of image
-        self.surf = pygame.transform.scale(self.surf, (80,120))
+        self.surf = pygame.transform.scale(self.surf, (64,64))
         self.rect = self.surf.get_rect(
         center=(
             x,
@@ -307,7 +308,7 @@ class Villager(pygame.sprite.Sprite):
       if self.mood == 1:
         flowers = []
         for plant in allPlants:
-          if plant.getType() == 0:
+          if plant.getType() == 0 and plant.getBackground() == 2:
             flowers.append(plant)
 
         for flower in flowers:
@@ -315,7 +316,7 @@ class Villager(pygame.sprite.Sprite):
               villagerIMG = vmediumIMG
               self.surf = pygame.image.load(villagerIMG)
               #Resize
-              self.surf = pygame.transform.scale(self.surf, (80,120))  
+              self.surf = pygame.transform.scale(self.surf, (64,64))  
               break
 
       elif self.mood == 0:
@@ -331,20 +332,20 @@ class Villager(pygame.sprite.Sprite):
               villagerIMG = vhappyIMG
               self.surf = pygame.image.load(villagerIMG)
               #Resize
-              self.surf = pygame.transform.scale(self.surf, (80,120))
+              self.surf = pygame.transform.scale(self.surf, (64,64))
               break
             else:
               villagerIMG = vmediumIMG
               self.surf = pygame.image.load(villagerIMG)
               #Resize
-              self.surf = pygame.transform.scale(self.surf, (80,120))  
+              self.surf = pygame.transform.scale(self.surf, (64,64))  
               break
 
 
 #Spawn villagers
 level1Viilagers = []
-level1Viilagers.append(Villager(200, 400))
-level1Viilagers.append(Villager(480, 220))
+level1Viilagers.append(Villager(200, 450))
+level1Viilagers.append(Villager(480, 280))
 
 #booleans
 running = True
@@ -423,9 +424,12 @@ while running:
             text = "remember to water and fertilize your plants"
         elif currbackground == 2:
           if(checkWithinBox(33, 126, 239, 322, mx, my)):
-            text = "villagers are not happy around oders"
+            text = "when healthy, heathy foods improve moods"
           elif(checkWithinBox(354, 446, 443, 516, mx, my)):
             text = "well maintained flowers remove airborne toxins"
+        elif currbackground == 3:
+          if(checkWithinBox(201, 294, 213, 294, mx, my)):
+            text = "a healthy tree can prevent soil loss to erosion"
       
       if(withinDistance(Position(playerX + 38, playerY + 50), Position(mx + 32, my + 32), 128)):
         if(currholding >= 4):
@@ -453,11 +457,11 @@ while running:
       elif currbackground == 3:
         text = "you are in the third area"
         currbackground = 2
-        # currbackgroundImage = backgroundImage3
+        currbackgroundImage = backgroundImage3
       elif currbackground == 4:
         text = "you are in the fourth area"
         currbackground = 3
-        # currbackgroundImage = backgroundImage4
+        currbackgroundImage = backgroundImage4
       
       print(currbackground)
 
@@ -473,13 +477,13 @@ while running:
         currbackground = 1
         currbackgroundImage = backgroundImage2
       elif currbackground == 2:
-        text = "you are in the fourth area"
+        text = ""
         currbackground = 3
-      #   currbackgroundImage = backgroundImage4
+        currbackgroundImage = backgroundImage4
       elif currbackground == 3:
-        text = "you are in the fifth area"
+        text = ""
         currbackground = 4
-        # currbackgroundImage = backgroundImage5
+        currbackgroundImage = backgroundImage5
       
       print(currbackground)
 
@@ -508,12 +512,15 @@ while running:
     print(currbackground)
 
   #third thing event
-  if currbackground == 2:
+  if currbackground == 3:
     if thirdBackgroundRiverBlocking:
-      if playerY >= 300:
-        playerY = 300
+      if playerY <= 139:
+        if playerX >= 350:
+          playerX = 350
+      if playerX >= 436:
+        playerX = 436
 
-      thirdBackgroundRiverBlocking = checkForNearbyTrees(300)
+      thirdBackgroundRiverBlocking = checkForNearbyTrees(436)
 
   #moving
   playerY += playerDeltaY
