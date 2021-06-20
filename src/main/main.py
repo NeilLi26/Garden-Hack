@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 
 widthTiles = 15
 heightTiles = 8
@@ -23,6 +24,12 @@ playerY = 300
 playerDeltaX = 0
 playerDeltaY = 0
 
+#villager initializations
+vsadIMG = "src/main/sadgirl.jpg"
+vmediumIMG = "src/main/mediumgirl.jpg"
+vhappyIMG = "src/main/happygirl.jpg"
+villagerIMG = vsadIMG
+
 #plants
 treeIMG = pygame.image.load('src/main/big_tree.png')
 flowerIMG = pygame.image.load('src/main/carrot.png')
@@ -35,7 +42,7 @@ gasIMG = pygame.image.load('src/main/cloud.png')
 currbackground = 0
 backgroundImage1 = pygame.image.load('src/main/Starting_Screen.png')
 backgroundImage2 = pygame.image.load('src/main/Tutorial_Screen.png')
-# backgroundImage3 = pygame.image.load('src/main/Starting_Screen.png')
+backgroundImage3 = pygame.image.load('src/main/Level_1_Screen.png')
 # backgroundImage4 = pygame.image.load('src/main/Starting_Screen.png')
 # backgroundImage5 = pygame.image.load('src/main/Starting_Screen.png')
 currbackgroundImage = backgroundImage1
@@ -173,6 +180,9 @@ def checkForHappyPlants():
     if plant.getWatered() and plant.getFertilized():
       plant.makeHappy()
       print("a plant was made happy")
+      for plant in allPlants:
+        print(plant.getType())
+        print(plant.getHappiness())
 
 def clearGasClouds(gasClouds):
   flowersInSameBackground = []
@@ -270,14 +280,81 @@ class imageCoordinateCombo():
   def getCoordinate(self):
     return self.coordinate
 
+all_villagers = pygame.sprite.Group()
+
+class Villager(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super(Villager,self).__init__()
+        self.surf = pygame.image.load(villagerIMG)
+        self.mood = 0
+
+        #changing the size of image
+        self.surf = pygame.transform.scale(self.surf, (80,120))
+        self.rect = self.surf.get_rect(
+        center=(
+            x,
+            y,
+            )
+        )
+    def update(self):
+      self.mood = 0
+      for cloud in gasClouds:
+        cloudPos = cloud.getPos()
+        if withinDistance(Position(cloudPos.getX(), cloudPos.getY()), Position(self.rect.centerx, self.rect.centery), 128):
+          self.mood = 1
+          break
+        
+      if self.mood == 1:
+        flowers = []
+        for plant in allPlants:
+          if plant.getType() == 0:
+            flowers.append(plant)
+
+        for flower in flowers:
+          if withinDistance(Position(flower.getPos().getX(), flower.getPos().getY()), Position(self.rect.centerx, self.rect.centery), 256):
+              villagerIMG = vmediumIMG
+              self.surf = pygame.image.load(villagerIMG)
+              #Resize
+              self.surf = pygame.transform.scale(self.surf, (80,120))  
+              break
+
+      elif self.mood == 0:
+        deliciousPlants = []
+        for plant in allPlants:
+          if plant.getType() == 1:
+            deliciousPlants.append(plant)
+
+        #Villager happiness
+        for plant in deliciousPlants:
+          if abs(self.rect.centerx - plant.getPos().getX()) < 80 and abs(self.rect.centery - plant.getPos().getY()) < 80:
+            if plant.getHappiness():
+              villagerIMG = vhappyIMG
+              self.surf = pygame.image.load(villagerIMG)
+              #Resize
+              self.surf = pygame.transform.scale(self.surf, (80,120))
+              break
+            else:
+              villagerIMG = vmediumIMG
+              self.surf = pygame.image.load(villagerIMG)
+              #Resize
+              self.surf = pygame.transform.scale(self.surf, (80,120))  
+              break
+
+
+#Spawn villagers
+level1Viilagers = []
+level1Viilagers.append(Villager(200, 400))
+level1Viilagers.append(Villager(480, 220))
+
 #booleans
 running = True
 QorEPRESSED = False
 thirdBackgroundRiverBlocking = True
 currholding = 0
 
-gasClouds.append(Gas(Position(300, 400), 1))
-gasClouds.append(Gas(Position(350, 400), 1))
+#gas clouds
+gasClouds.append(Gas(Position(120, 450), 2))
+gasClouds.append(Gas(Position(368, 270), 2))
 
 while running:
 
@@ -312,6 +389,8 @@ while running:
           currholding = 5
         else:
           currholding -= 1
+      elif event.key == pygame.K_ESCAPE:
+        exit()
 
       if currbackground != 0 and QorEPRESSED:
         if currholding == 0:
@@ -332,16 +411,22 @@ while running:
       playerDeltaY = 0
 
     if event.type == pygame.MOUSEBUTTONDOWN:
-      if currbackground == 1 and currholding == 0:
-        if(checkWithinBox(48, 122, 137, 223, mx, my)):
-          text = "flowers are great at removing noxious odors"
-        elif(checkWithinBox(500, 575, 137, 223, mx, my)):
-          text = "trees do a lot to stabilize soil"
-        elif(checkWithinBox(10, 85, 353, 440, mx, my)):
-          text = "vegetables are an important food source"
-        elif(checkWithinBox(702, 778, 341, 427, mx, my)):
-          text = "remember to water and fertilize your plants"
-
+      if currholding == 0:
+        if currbackground == 1:
+          if(checkWithinBox(48, 122, 137, 223, mx, my)):
+            text = "flowers are great at removing noxious odors"
+          elif(checkWithinBox(500, 575, 137, 223, mx, my)):
+            text = "trees do a lot to stabilize soil"
+          elif(checkWithinBox(10, 85, 353, 440, mx, my)):
+            text = "vegetables are an important food source"
+          elif(checkWithinBox(702, 778, 341, 427, mx, my)):
+            text = "remember to water and fertilize your plants"
+        elif currbackground == 2:
+          if(checkWithinBox(33, 126, 239, 322, mx, my)):
+            text = "villagers are not happy around oders"
+          elif(checkWithinBox(354, 446, 443, 516, mx, my)):
+            text = "well maintained flowers remove airborne toxins"
+      
       if(withinDistance(Position(playerX + 38, playerY + 50), Position(mx + 32, my + 32), 128)):
         if(currholding >= 4):
           if currholding == 4:
@@ -383,7 +468,7 @@ while running:
       playerX = -28
 
       if currbackground == 0:
-        text = "press the signs while holding nothing for tip"
+        text = "click the signs while holding nothing for tips"
         holdingText = "press q and e to hold different items"
         currbackground = 1
         currbackgroundImage = backgroundImage2
@@ -416,7 +501,7 @@ while running:
       playerY = -28
       text = "you are in the third area"
       currbackground = 2
-      # currbackgroundImage = backgroundImage1
+      currbackgroundImage = backgroundImage3
     else:
       playerY = HEIGHT - 32
       
@@ -440,4 +525,10 @@ while running:
   renderClouds(currbackground)
   player(playerX, playerY)
   
+  #rendering villagers
+  if currbackground == 2:
+    for villager in level1Viilagers:
+      villager.update()
+      screen.blit(villager.surf, villager.rect)
+
   pygame.display.update()
